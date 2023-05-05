@@ -36,7 +36,6 @@ Context: ${context}`;
 }
 
 async function getCompletion(prompt: string) {
-  console.log('process.env.OPENAI_API_KEY', process.env.OPENAI_API_KEY);
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -54,7 +53,6 @@ async function getCompletion(prompt: string) {
   });
 
   const data = await response.json();
-  console.log('JSON.stringify(data)', JSON.stringify(data, null, 2));
   const clue = data?.choices?.at(0)?.message?.content?.trim();
   return clue;
 }

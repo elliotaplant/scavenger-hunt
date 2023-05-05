@@ -4,8 +4,16 @@ import { useState } from 'react';
 import { FORM_ERROR } from 'final-form';
 import { sleep } from '../utils/sleep';
 
+export interface ClueState {
+  location?: string;
+  context?: string;
+  result?: string;
+}
+
 interface ClueProps {
-  onDelete?: () => void;
+  onDelete: () => void;
+  onUpdate: (clue: ClueState) => void;
+  initialValues: ClueState;
 }
 
 interface ClueFormFields {
@@ -15,12 +23,13 @@ interface ClueFormFields {
 
 const { Form } = withTypes<ClueFormFields>();
 
-export function Clue({ onDelete }: ClueProps) {
+export function Clue({ initialValues, onUpdate, onDelete }: ClueProps) {
   const [generating, setGenerating] = useState(false);
-  const [clueResult, setClueResult] = useState('');
+  // const [clueResult, setClueResult] = useState(initialValues.result);
 
   const generateClue = async ({ location, context }: ClueFormFields) => {
     setGenerating(true);
+    onUpdate({ location, context });
     const search = new URLSearchParams();
 
     if (location) {
@@ -50,7 +59,7 @@ export function Clue({ onDelete }: ClueProps) {
         await sleep(1000);
       }
       if (clueResult) {
-        setClueResult(clueResult);
+        onUpdate({ location, context, result: clueResult });
       }
     } catch (error: any) {
       console.error(error);
@@ -65,6 +74,7 @@ export function Clue({ onDelete }: ClueProps) {
     <section style={{ marginBottom: '2rem' }}>
       <Form
         onSubmit={generateClue}
+        initialValues={initialValues}
         render={({ handleSubmit, hasValidationErrors, submitError }) => (
           <form onSubmit={handleSubmit}>
             <label>Location</label>
@@ -88,9 +98,9 @@ export function Clue({ onDelete }: ClueProps) {
               disabled={generating}
               component="textarea"
             />
-            {clueResult && (
+            {initialValues.result && (
               <pre>
-                <code>{clueResult}</code>
+                <code>{initialValues.result}</code>
               </pre>
             )}
             {submitError && <p style={{ color: 'red' }}>{submitError}</p>}
@@ -100,7 +110,7 @@ export function Clue({ onDelete }: ClueProps) {
               disabled={generating || hasValidationErrors}
               style={{ marginRight: '1rem' }}
             >
-              {clueResult ? 'Generate Clue' : 'Regenerate Clue'}
+              {initialValues.result ? 'Regenerate Clue' : 'Generate Clue'}
             </button>
             <button
               name="deleteButton"
