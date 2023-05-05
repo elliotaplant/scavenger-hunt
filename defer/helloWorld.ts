@@ -6,6 +6,8 @@ async function helloWorld(name: string) {
   return new Promise((resolve) => {
     setTimeout(() => {
       console.log(`Hello ${name}!`);
+
+      // Hit redis
       resolve('done');
     }, 5000);
   });
