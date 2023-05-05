@@ -49,7 +49,7 @@ export function Clue({ onDelete }: ClueProps) {
   };
 
   return (
-    <section>
+    <section style={{ marginBottom: '2rem' }}>
       <Form
         onSubmit={generateClue}
         render={({ handleSubmit, hasValidationErrors, submitError }) => (
