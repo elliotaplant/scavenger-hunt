@@ -3,6 +3,7 @@ import { required } from '../utils/form';
 import { useState } from 'react';
 import { FORM_ERROR } from 'final-form';
 import { sleep } from '../utils/sleep';
+import { HuntConfigState } from './Main';
 
 export interface ClueState {
   location?: string;
@@ -14,6 +15,7 @@ interface ClueProps {
   onDelete: () => void;
   onUpdate: (clue: ClueState) => void;
   initialValues: ClueState;
+  huntConfig: HuntConfigState;
 }
 
 interface ClueFormFields {
@@ -23,7 +25,7 @@ interface ClueFormFields {
 
 const { Form } = withTypes<ClueFormFields>();
 
-export function Clue({ initialValues, onUpdate, onDelete }: ClueProps) {
+export function Clue({ initialValues, onUpdate, onDelete, huntConfig }: ClueProps) {
   const [generating, setGenerating] = useState(false);
   // const [clueResult, setClueResult] = useState(initialValues.result);
 
@@ -41,6 +43,14 @@ export function Clue({ initialValues, onUpdate, onDelete }: ClueProps) {
 
     if (context) {
       search.append('context', context);
+    }
+
+    if (huntConfig.targetAge) {
+      search.append('targetAge', huntConfig.targetAge);
+    }
+
+    if (huntConfig.theme) {
+      search.append('theme', huntConfig.theme);
     }
 
     try {
@@ -110,16 +120,22 @@ export function Clue({ initialValues, onUpdate, onDelete }: ClueProps) {
               disabled={generating || hasValidationErrors}
               style={{ marginRight: '1rem' }}
             >
-              {initialValues.result ? 'Regenerate Clue' : 'Generate Clue'}
+              {generating
+                ? 'Generating Clue'
+                : initialValues.result
+                ? 'Regenerate Clue'
+                : 'Generate Clue'}
             </button>
-            <button
-              name="deleteButton"
-              style={{ backgroundColor: 'transparent', color: 'red', borderColor: 'red' }}
-              type="button"
-              onClick={onDelete}
-            >
-              Delete Clue
-            </button>
+            {!generating && (
+              <button
+                name="deleteButton"
+                style={{ backgroundColor: 'transparent', color: 'red', borderColor: 'red' }}
+                type="button"
+                onClick={onDelete}
+              >
+                Delete Clue
+              </button>
+            )}
           </form>
         )}
       />

@@ -14,27 +14,6 @@ if (!redisPrefix) {
 
 const redis = new Redis(redisUrl);
 
-function locationOnlyPrompt(location: string) {
-  return `Act as a scavenger hunt clue generator. 
-Create rhyming riddle clues to indicate where the next clue is located. 
-Your response should have four short lines.
-Do not include words from the Location in the riddle.
-
-Location: ${location}`;
-}
-
-function locationAndContextPrompt(location: string, context: string) {
-  return `Act as a scavenger hunt clue generator. 
-Create rhyming riddle clues to indicate where the next clue is located. 
-Your response should have four short lines. 
-Do not include words from the Location in the riddle.
-Include the context in the riddle if possible. 
-
-Location: ${location}
-
-Context: ${context}`;
-}
-
 async function getCompletion(prompt: string) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -58,13 +37,38 @@ async function getCompletion(prompt: string) {
 }
 
 // a background function must be `async`
-async function generateClue(clueId: string, location: string, context: string | undefined) {
+async function generateClue(
+  clueId: string,
+  {
+    location,
+    context,
+    targetAge,
+    theme,
+  }: {
+    location: string;
+    context?: string;
+    targetAge?: string;
+    theme?: string;
+  },
+) {
   const prefixedKey = [process.env.REDIS_PREFIX, clueId].join(':');
   redis.set(prefixedKey, 'pending');
 
-  const prompt = context
-    ? locationAndContextPrompt(location, context)
-    : locationOnlyPrompt(location);
+  const prompt = `Act as a scavenger hunt clue generator. 
+Create a ${
+    theme ? 'Themed ' : ''
+  }rhyming riddle to clearly indicate where the next clue is located. 
+Your response should have four short lines.
+Do not include words from the Location in the riddle.
+${context ? 'Include the context in the riddle if possible.' : ''}
+${targetAge ? `The riddle should be written for a ${targetAge} year old.` : ''}
+
+Next Clue Location: ${location}
+
+${context ? 'Context: ' + context : ''}
+
+${theme ? 'Theme: ' + theme : ''}
+`.trim();
 
   console.log('prompt', prompt);
 
