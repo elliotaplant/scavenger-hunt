@@ -2,6 +2,7 @@ import { Field, withTypes } from 'react-final-form';
 import { required } from '../utils/form';
 import { useState } from 'react';
 import { FORM_ERROR } from 'final-form';
+import { sleep } from '../utils/sleep';
 
 interface ClueProps {
   onDelete?: () => void;
@@ -16,11 +17,10 @@ const { Form } = withTypes<ClueFormFields>();
 
 export function Clue({ onDelete }: ClueProps) {
   const [generating, setGenerating] = useState(false);
-  const [clueResult, setClueResult] = useState(false);
+  const [clueResult, setClueResult] = useState('');
 
   const generateClue = async ({ location, context }: ClueFormFields) => {
     setGenerating(true);
-    let url = '/.netlify/functions/generate-clue?';
     const search = new URLSearchParams();
 
     if (location) {
@@ -35,10 +35,23 @@ export function Clue({ onDelete }: ClueProps) {
     }
 
     try {
-      const response = await fetch(url + search.toString());
-      const { clue } = await response.json();
-      console.log('clue', clue);
-      setClueResult(clue);
+      const response = await fetch('/.netlify/functions/generate-clue?' + search.toString());
+      const { clueId } = await response.json();
+
+      let clueResult: string | null = null;
+      let gotResult = false;
+      while (!gotResult) {
+        const response = await fetch(`/.netlify/functions/clue-result?clueId=${clueId}`);
+        const { clue, ready } = await response.json();
+        if (ready) {
+          clueResult = clue;
+          gotResult = true;
+        }
+        await sleep(1000);
+      }
+      if (clueResult) {
+        setClueResult(clueResult);
+      }
     } catch (error: any) {
       console.error(error);
       alert('Failed to generate clue');
@@ -87,7 +100,7 @@ export function Clue({ onDelete }: ClueProps) {
               disabled={generating || hasValidationErrors}
               style={{ marginRight: '1rem' }}
             >
-              Generate Clue
+              {clueResult ? 'Generate Clue' : 'Regenerate Clue'}
             </button>
             <button
               name="deleteButton"
