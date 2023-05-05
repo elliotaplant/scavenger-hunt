@@ -100,7 +100,7 @@ export function Clue({ onDelete }: ClueProps) {
               disabled={generating || hasValidationErrors}
               style={{ marginRight: '1rem' }}
             >
-              Generate Clue
+              {clueResult ? 'Generate Clue' : 'Regenerate Clue'}
             </button>
             <button
               name="deleteButton"
