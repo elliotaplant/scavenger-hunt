@@ -36,5 +36,9 @@ export const handler: Handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ clue: null, ready: false }) };
   }
 
+  if (result === 'failed') {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Job failed' }) };
+  }
+
   return { statusCode: 200, body: JSON.stringify({ clue: result, ready: true }) };
 };
