@@ -1,5 +1,6 @@
-import Bull from 'bull';
+import { Job, Worker } from 'bullmq';
 import { getCompletion } from './getCompletion';
+import Redis from 'ioredis';
 
 export interface GenerateClueRequest {
   clueId: string;
@@ -15,14 +16,12 @@ if (!REDIS_URL || !BULL_QUEUE_NAME || !REDIS_PREFIX) {
   throw new Error('Missing REDIS_URL or BULL_QUEUE_NAME or REDIS_PREFIX in env');
 }
 
-console.log('Creating queue', { BULL_QUEUE_NAME });
-const queue = new Bull<GenerateClueRequest>(BULL_QUEUE_NAME, REDIS_URL);
+const connection = new Redis(REDIS_URL);
 
-queue.process(async (job) => {
+const handleJob = async (job: Job<GenerateClueRequest>) => {
   const { clueId, location, theme, targetAge, context } = job.data;
-  const redis = queue.client;
   const prefixedKey = [process.env.REDIS_PREFIX, clueId].join(':');
-  redis.set(prefixedKey, 'pending');
+  connection.set(prefixedKey, 'pending');
 
   const prompt = `Act as a scavenger hunt clue generator. 
 Create a ${
@@ -45,8 +44,10 @@ ${theme ? `Theme: ${theme}` : ''}
   const clue = await getCompletion(prompt);
   console.log('clue', clue);
 
-  await redis.set(prefixedKey, clue, 'EX', 86400);
+  await connection.set(prefixedKey, clue, 'EX', 86400);
   console.log('Set redis', { prefixedKey });
-});
+};
 
-console.log('Listening for jobs in queue', { BULL_QUEUE_NAME });
+const worker = new Worker<GenerateClueRequest>(BULL_QUEUE_NAME, handleJob, { connection });
+
+console.log('Listening for jobs in queue', { BULL_QUEUE_NAME, workerName: worker.name });
