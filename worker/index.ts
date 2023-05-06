@@ -21,12 +21,13 @@ const connection = new Redis(REDIS_URL);
 const handleJob = async (job: Job<GenerateClueRequest>) => {
   const { clueId, location, theme, targetAge, context } = job.data;
   const prefixedKey = [process.env.REDIS_PREFIX, clueId].join(':');
-  connection.set(prefixedKey, 'pending');
+  await connection.set(prefixedKey, 'pending', 'EX', 86400);
 
-  const prompt = `Act as a scavenger hunt clue generator. 
+  try {
+    const prompt = `Act as a scavenger hunt clue generator. 
 Create a ${
-    theme ? 'Themed ' : ''
-  }rhyming riddle to clearly indicate where the next clue is located. 
+      theme ? 'Themed ' : ''
+    }rhyming riddle to clearly indicate where the next clue is located. 
 Your response should have four short lines.
 Do not include words from the Location in the riddle.
 ${context ? 'Include the context in the riddle if possible.' : ''}
@@ -37,15 +38,19 @@ Next Clue Location: ${location}
 ${context ? `Context: ${context}` : ''}
 
 ${theme ? `Theme: ${theme}` : ''}
-`.trim();
+  `.trim();
 
-  console.log('prompt', prompt);
+    console.log('prompt', prompt);
 
-  const clue = await getCompletion(prompt);
-  console.log('clue', clue);
+    const clue = await getCompletion(prompt);
+    console.log('clue', clue);
 
-  await connection.set(prefixedKey, clue, 'EX', 86400);
-  console.log('Set redis', { prefixedKey });
+    await connection.set(prefixedKey, clue, 'EX', 86400);
+    console.log('Set redis', { prefixedKey });
+  } catch (error) {
+    await connection.set(prefixedKey, 'failed', 'EX', 86400);
+    throw error;
+  }
 };
 
 const worker = new Worker<GenerateClueRequest>(BULL_QUEUE_NAME, handleJob, { connection });
