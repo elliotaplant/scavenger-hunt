@@ -13,20 +13,23 @@ const redis = new Redis(redisUrl);
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'GET') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   const clueId = event.queryStringParameters?.clueId;
 
   if (!clueId) {
-    return { statusCode: 400, body: "Missing required 'location' parameter" };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Missing required 'location' parameter" }),
+    };
   }
 
   const prefixedKey = [redisPrefix, clueId].join(':');
   const result = await redis.get(prefixedKey);
 
   if (result === null) {
-    return { statusCode: 404, body: `Clue not found with id ${clueId}` };
+    return { statusCode: 404, body: JSON.stringify({ error: `Clue not found with id ${clueId}` }) };
   }
 
   if (result === 'pending') {
