@@ -1,9 +1,9 @@
 import { Field, withTypes } from 'react-final-form';
-import { required } from '../utils/form';
+import { required } from './utils/form';
 import { useState } from 'react';
 import { FORM_ERROR } from 'final-form';
-import { sleep } from '../utils/sleep';
-import { HuntConfigState } from './Main';
+import { sleep } from './utils/sleep';
+import { HuntConfigState } from './App';
 
 export interface ClueState {
   location?: string;
