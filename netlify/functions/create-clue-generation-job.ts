@@ -1,6 +1,8 @@
 import { Handler } from '@netlify/functions';
 import Redis from 'ioredis';
 import generateClue from '../../defer/generate-clue';
+import testOpenai from '../../defer/test-openai';
+import testRedis from '../../defer/test-redis';
 
 const { REDIS_URL, REDIS_PREFIX } = process.env;
 
@@ -24,6 +26,8 @@ export const handler: Handler = async (event) => {
 
   const prefixedKey = [REDIS_PREFIX, clueId].join(':');
   await connection.set(prefixedKey, 'pending', 'EX', 86400);
+  await testOpenai();
+  await testRedis();
   await generateClue({ clueId, location, context, theme, targetAge });
   return { statusCode: 201, body: JSON.stringify({ clueId }) };
 };
