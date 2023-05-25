@@ -54,7 +54,9 @@ export function Clue({ initialValues, onUpdate, onDelete, huntConfig }: ClueProp
     }
 
     try {
-      const response = await fetch('/.netlify/functions/generate-clue?' + search.toString());
+      const response = await fetch(
+        '/.netlify/functions/create-clue-generation-job?' + search.toString(),
+      );
       const { clueId } = await response.json();
 
       let clueResult: string | null = null;

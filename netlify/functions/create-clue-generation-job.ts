@@ -1,7 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { GenerateClueRequest } from '../../worker';
 import Redis from 'ioredis';
-import { Queue } from 'bullmq';
+import generateClue from '../../defer/generate-clue';
 
 const { REDIS_URL, BULL_QUEUE_NAME, REDIS_PREFIX } = process.env;
 
@@ -11,8 +10,6 @@ if (!REDIS_URL || !BULL_QUEUE_NAME || !REDIS_PREFIX) {
 const connection = new Redis(REDIS_URL);
 
 export const handler: Handler = async (event) => {
-  const queue = new Queue<GenerateClueRequest>(BULL_QUEUE_NAME, { connection });
-
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -25,7 +22,8 @@ export const handler: Handler = async (event) => {
 
   const clueId = String(Math.random() * 1e18);
 
-  await queue.add(clueId, { clueId, location, context, theme, targetAge });
-
-  return { statusCode: 202, body: JSON.stringify({ clueId }) };
+  const prefixedKey = [REDIS_PREFIX, clueId].join(':');
+  await connection.set(prefixedKey, 'pending', 'EX', 86400);
+  await generateClue({ clueId, location, context, theme, targetAge });
+  return { statusCode: 201, body: JSON.stringify({ clueId }) };
 };
