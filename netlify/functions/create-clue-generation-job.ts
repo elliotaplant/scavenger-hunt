@@ -2,10 +2,10 @@ import { Handler } from '@netlify/functions';
 import Redis from 'ioredis';
 import generateClue from '../../defer/generate-clue';
 
-const { REDIS_URL, BULL_QUEUE_NAME, REDIS_PREFIX } = process.env;
+const { REDIS_URL, REDIS_PREFIX } = process.env;
 
-if (!REDIS_URL || !BULL_QUEUE_NAME || !REDIS_PREFIX) {
-  throw new Error('Missing REDIS_URL or BULL_QUEUE_NAME or REDIS_PREFIX in env');
+if (!REDIS_URL || !REDIS_PREFIX) {
+  throw new Error('Missing REDIS_URL or REDIS_PREFIX in env');
 }
 const connection = new Redis(REDIS_URL);
 

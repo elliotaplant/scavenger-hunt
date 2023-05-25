@@ -10,10 +10,10 @@ export interface GenerateClueRequest {
   theme?: string;
 }
 
-const { REDIS_URL, BULL_QUEUE_NAME, REDIS_PREFIX } = process.env;
+const { REDIS_URL, REDIS_PREFIX } = process.env;
 
-if (!REDIS_URL || !BULL_QUEUE_NAME || !REDIS_PREFIX) {
-  throw new Error('Missing REDIS_URL or BULL_QUEUE_NAME or REDIS_PREFIX in env');
+if (!REDIS_URL || !REDIS_PREFIX) {
+  throw new Error('Missing REDIS_URL or REDIS_PREFIX in env');
 }
 
 const generateClue = async ({
