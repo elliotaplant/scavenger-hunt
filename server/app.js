@@ -1,7 +1,9 @@
 const express = require('express');
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000;
+app.use(cors());
+const port = process.env.PORT || 3001;
 
 app.get('/generate-clue', async (req, res) => {
   try {

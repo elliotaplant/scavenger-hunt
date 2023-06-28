@@ -2,8 +2,9 @@ import { Field, withTypes } from 'react-final-form';
 import { required } from './utils/form';
 import { useState } from 'react';
 import { FORM_ERROR } from 'final-form';
-import { sleep } from './utils/sleep';
 import { HuntConfigState } from './App';
+
+const apiOrigin = process.env.REACT_APP_API_ORIGIN;
 
 export interface ClueState {
   location?: string;
@@ -27,7 +28,6 @@ const { Form } = withTypes<ClueFormFields>();
 
 export function Clue({ initialValues, onUpdate, onDelete, huntConfig }: ClueProps) {
   const [generating, setGenerating] = useState(false);
-  // const [clueResult, setClueResult] = useState(initialValues.result);
 
   const generateClue = async ({ location, context }: ClueFormFields) => {
     setGenerating(true);
@@ -54,24 +54,13 @@ export function Clue({ initialValues, onUpdate, onDelete, huntConfig }: ClueProp
     }
 
     try {
-      const response = await fetch(
-        '/.netlify/functions/create-clue-generation-job?' + search.toString(),
-      );
-      const { clueId } = await response.json();
+      const response = await fetch(`${apiOrigin}/generate-clue?${search.toString()}`);
+      const { clue, error } = await response.json();
 
-      let clueResult: string | null = null;
-      let gotResult = false;
-      while (!gotResult) {
-        const response = await fetch(`/.netlify/functions/clue-result?clueId=${clueId}`);
-        const { clue, ready } = await response.json();
-        if (ready) {
-          clueResult = clue;
-          gotResult = true;
-        }
-        await sleep(1000);
-      }
-      if (clueResult) {
-        onUpdate({ location, context, result: clueResult });
+      if (clue) {
+        onUpdate({ location, context, result: clue });
+      } else {
+        throw new Error(error);
       }
     } catch (error: any) {
       console.error(error);
